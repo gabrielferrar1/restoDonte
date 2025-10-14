@@ -79,3 +79,66 @@ src/
 └── services/       # Camada de serviço (regras de negócio)
 
 ```
+
+## Orientações para contribuição com o projeto
+Para manter o projeto organizado e garantir a qualidade do código, seguimos um fluxo de trabalho com branches. Ninguém deve enviar código diretamente para a branch `main`.
+
+Siga este passo a passo para cada nova funcionalidade ou correção:
+
+**1. Sincronize sua Branch `main` Local**
+
+Antes de começar a trabalhar, garanta que sua `main` local está atualizada com a versão mais recente do repositório remoto.
+
+```bash
+git checkout main
+git pull origin main
+```
+
+**2. Crie uma Nova Branch para sua Tarefa**
+
+Crie uma branch a partir da `main` para isolar seu trabalho. Use prefixos como `feature/`, `fix/` ou `docs/` para identificar o tipo de tarefa.
+
+*   **Para uma nova funcionalidade:**
+    ```bash
+    git checkout -b feature/nome-da-funcionalidade
+    ```
+    *Exemplo:* `git checkout -b feature/autenticacao-jwt`
+
+*   **Para uma correção de bug:**
+    ```bash
+    git checkout -b fix/descricao-do-bug
+    ```
+    *Exemplo:* `git checkout -b fix/erro-calculo-total-comanda`
+
+**3. Trabalhe e Faça Commits na sua Branch**
+
+Faça seu trabalho normalmente. Adicione e "commite" suas alterações em pequenos passos lógicos. Escreva mensagens de commit claras.
+
+```bash
+# Após fazer suas alterações...
+git add .
+
+# Use mensagens de commit descritivas
+git commit -m "feat: adiciona rota POST para criar usuários"
+```
+
+**4. Envie sua Branch para o GitHub**
+
+Quando seu trabalho estiver concluído, envie sua branch para o repositório remoto no GitHub.
+
+```bash
+git push origin nome-da-sua-branch
+```
+*Exemplo:* `git push origin feature/autenticacao-jwt`
+
+**5. Abra um Pull Request (PR)**
+
+*   Acesse a página do nosso repositório no GitHub.
+*   O GitHub mostrará um aviso com um botão "Compare & pull request". Clique nele.
+*   Escreva um título claro e uma breve descrição do que você fez.
+*   Na seção "Reviewers" (Revisores) à direita, selecione pelo menos um colega de equipe para revisar seu código.
+*   Clique em "Create pull request".
+
+**6. Avivar no Grupo do Whats**
+
+Após abrir o PR, avise no grupo do WhatsApp da equipe que você criou um novo PR para revisão. Isso ajuda a garantir que alguém veja e avalie o código.
