@@ -1,3 +1,0 @@
-# ignora os arquivos que não precisam ser versionados
-node_modules
-.env

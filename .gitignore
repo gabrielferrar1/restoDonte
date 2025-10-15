@@ -1,0 +1,13 @@
+# Pasta de configuração da IDE JetBrains
+.idea/
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# --- Backend (Node.js) ---
+# Ignora a pasta de dependências do backend
+/backend/node_modules/
+
+# Ignora o arquivo de variáveis de ambiente do backend
+/backend/.env
