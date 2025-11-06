@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const db = require('./models');
+const routes = require('./routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,10 +25,14 @@ app.get('/', (req, res) => {
         message: 'Bem-vindo à API RestôDonte',
         version: '1.0.0',
         endpoints: {
-            health: '/health'
+            health: '/health',
+            api: '/api'
         }
     });
 });
+
+// Rotas da API
+app.use('/api', routes);
 
 // Tratamento de rotas não encontradas
 app.use((req, res) => {
@@ -58,6 +63,7 @@ const startServer = async () => {
             console.log(`✓ Servidor rodando na porta ${PORT}`);
             console.log(`✓ Ambiente: ${process.env.NODE_ENV || 'development'}`);
             console.log(`✓ Health check disponível em: http://localhost:${PORT}/health`);
+            console.log(`✓ API disponível em: http://localhost:${PORT}/api`);
         });
     } catch (error) {
         console.error('✗ Não foi possível conectar ao banco de dados:', error.message);
