@@ -6,6 +6,32 @@ O servidor é construído com **Node.js**, **Express**, e utiliza o **Sequelize*
 
 Para o desenvolvimento do frontend, utilizaremos **React Native** e **Expo** para criar uma aplicação móvel que se conecta a este backend.
 
+## 📚 Documentação
+
+- **[Guia de Implementação](backend/GUIA_IMPLEMENTACAO.md)** - Tutorial completo sobre o que foi implementado e próximos passos
+- **[Documentação da API](backend/API_DOCS.md)** - Referência completa de todos os endpoints da API
+
+## ✅ Status do Projeto
+
+### Implementado
+- ✅ Servidor Express configurado
+- ✅ Conexão com PostgreSQL via Sequelize
+- ✅ Estrutura de pastas completa (models, controllers, services, routes)
+- ✅ Sistema de migrations e seeders
+- ✅ Módulo completo de Mesas (CRUD)
+  - Model com validações
+  - Service com regras de negócio
+  - Controller com endpoints REST
+  - Migration e Seeder
+
+### Em Desenvolvimento
+- 🚧 Módulo de Clientes
+- 🚧 Módulo de Itens do Menu
+- 🚧 Módulo de Comandas
+- 🚧 Módulo de Pedidos
+- 🚧 Módulo de Pagamentos
+- 🚧 Frontend React Native
+
 ## Pré-requisitos
 
 Antes de começar, garanta que você tenha as seguintes ferramentas instaladas:
@@ -13,13 +39,92 @@ Antes de começar, garanta que você tenha as seguintes ferramentas instaladas:
 *   [NPM](https://www.npmjs.com/ ) (gerenciador de pacotes que vem com o Node.js)
 *   [PostgreSQL](https://www.postgresql.org/download/ ) (banco de dados rodando localmente)
 
-## Instalação e Execução
+## 🚀 Início Rápido
+
+### 1. Clone o Repositório
+```bash
+git clone https://github.com/gabrielferrar1/restoDonte.git
+cd restoDonte/backend
+```
+
+### 2. Instale as Dependências
+```bash
+npm install
+```
+
+### 3. Configure as Variáveis de Ambiente
+Copie o arquivo de exemplo e configure suas credenciais:
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env` com as credenciais do seu PostgreSQL:
+```env
+PORT=3000
+NODE_ENV=development
+
+DB_HOST=localhost
+DB_USER=postgres
+DB_PASSWORD=sua_senha_aqui
+DB_NAME=restodonte
+DB_SSL=false
+```
+
+### 4. Crie o Banco de Dados
+```bash
+createdb restodonte
+```
+
+Ou via SQL:
+```sql
+CREATE DATABASE restodonte;
+```
+
+### 5. Execute as Migrations
+```bash
+npx sequelize-cli db:migrate
+```
+
+### 6. (Opcional) Popule com Dados Iniciais
+```bash
+npx sequelize-cli db:seed:all
+```
+
+### 7. Inicie o Servidor
+```bash
+npm run dev
+```
+
+O servidor estará rodando em: http://localhost:3000
+
+## 📝 Testando a API
+
+### Health Check
+```bash
+curl http://localhost:3000/health
+```
+
+### Listar Mesas
+```bash
+curl http://localhost:3000/api/mesas
+```
+
+### Criar uma Mesa
+```bash
+curl -X POST http://localhost:3000/api/mesas \
+  -H "Content-Type: application/json" \
+  -d '{"numero": 11, "capacidade": 4}'
+```
+
+Para mais exemplos, consulte a [Documentação da API](backend/API_DOCS.md).
+
+## Instalação e Execução (Detalhada)
 
 Siga os passos abaixo para configurar e executar o projeto em seu ambiente local.
 
 **1. Clone o Repositório:**
 ```bash
-git clone https://github.com/seu-usuario/restoDonte.git
+git clone https://github.com/gabrielferrar1/restoDonte.git
 cd restoDonte/backend
 ```
 
@@ -33,15 +138,20 @@ npm install
 O projeto precisa de um arquivo `.env` para armazenar as credenciais do banco de dados.
 
 *   Na pasta `backend`, crie um arquivo chamado `.env`.
-*   Copie o conteúdo abaixo para dentro do arquivo `.env` e substitua os valores pelos dados do seu banco PostgreSQL, neste caso vai precisar mudar somente a senha.
+*   Copie o arquivo `.env.example` ou adicione o conteúdo abaixo e substitua os valores pelos dados do seu banco PostgreSQL:
 
 ```env
 # Arquivo .env
+# Configuração do Servidor
+PORT=3000
+NODE_ENV=development
+
 # Credenciais do Banco de Dados PostgreSQL
 DB_HOST=localhost
 DB_USER=postgres
 DB_PASSWORD=sua_senha_aqui
 DB_NAME=restodonte
+DB_SSL=false
 ```
 
 **4. Crie o Banco de Dados:**
