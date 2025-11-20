@@ -1,4 +1,4 @@
-# RestôDonte - Backend e Frontend
+# RestôDonte - Backend
 
 Este é o repositório do backend e frontend para o aplicativo **RestôDonte**, o sistema de gerenciamento de comandas para restaurantes. Este projeto foi desenvolvido para o trabalho final das disciplinas de Programação II e Banco de Dados II.
 
