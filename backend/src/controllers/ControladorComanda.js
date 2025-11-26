@@ -101,7 +101,7 @@ class ControladorComanda {
 
       res.json({
         sucesso: true,
-        mensagem: 'Pagamento registrado com sucesso',
+        mensagem: 'Pagamento da comanda registrado com sucesso',
         dados: comanda
       });
     } catch (erro) {
@@ -113,3 +113,4 @@ class ControladorComanda {
   }
 }
 
+module.exports = new ControladorComanda();
