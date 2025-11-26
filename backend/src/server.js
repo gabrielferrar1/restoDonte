@@ -6,9 +6,16 @@ const rotas = require('./routes');
 
 const app = express();
 const PORTA = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+// Configurar CORS: aceitar FRONTEND_URL em produção ou todas as origens em desenvolvimento
+const origemFrontend = process.env.FRONTEND_URL || '*';
+const corsOptions = process.env.NODE_ENV === 'production'
+  ? { origin: origemFrontend }
+  : { origin: true };
 
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -56,44 +63,43 @@ const iniciarServidor = async () => {
   try {
     // Testar conexão com o banco de dados
     await sequelize.authenticate();
-    console.log('✅ Conexão com o banco de dados estabelecida com sucesso!');
-    
+    console.log('Conexão com o banco de dados estabelecida com sucesso!');
+
     // Sincronizar modelos (apenas em desenvolvimento)
     if (process.env.NODE_ENV === 'development') {
       // await sequelize.sync({ alter: false });
-      console.log('📊 Modelos sincronizados');
+      console.log('Modelos sincronizados');
     }
     
     // Iniciar servidor
-    app.listen(PORTA, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORTA}`);
-      console.log(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 API disponível em: http://localhost:${PORTA}/api`);
-      console.log(`\n📚 Endpoints disponíveis:`);
-      console.log(`   - POST   /api/autenticacao/login`);
-      console.log(`   - POST   /api/autenticacao/registrar`);
-      console.log(`   - GET    /api/cardapio`);
-      console.log(`   - GET    /api/comandas`);
-      console.log(`   - GET    /api/producao/copa`);
-      console.log(`   - GET    /api/producao/cozinha`);
-      console.log(`   - GET    /api/relatorios/diario`);
-      console.log(`\n✨ RestôDonte Backend está pronto!\n`);
+    app.listen(PORTA, HOST, () => {
+      const publicHost = process.env.INSTANCE_PUBLIC_IP || HOST;
+      console.log(`Servidor rodando em http://${publicHost}:${PORTA}`);
+      console.log(`Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log('Endpoints principais:');
+      console.log('  - POST   /api/autenticacao/login');
+      console.log('  - POST   /api/autenticacao/registrar');
+      console.log('  - GET    /api/cardapio');
+      console.log('  - GET    /api/comandas');
+      console.log('  - GET    /api/producao/copa');
+      console.log('  - GET    /api/producao/cozinha');
+      console.log('  - GET    /api/relatorios/diario');
     });
   } catch (erro) {
-    console.error('❌ Erro ao iniciar o servidor:', erro);
+    console.error('Erro ao iniciar o servidor:', erro);
     process.exit(1);
   }
 };
 
 // Tratamento de sinais de encerramento
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM recebido. Encerrando servidor gracefully...');
+  console.log('SIGTERM recebido. Encerrando servidor...');
   await sequelize.close();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('\nSIGINT recebido. Encerrando servidor gracefully...');
+  console.log('SIGINT recebido. Encerrando servidor...');
   await sequelize.close();
   process.exit(0);
 });
@@ -102,4 +108,3 @@ process.on('SIGINT', async () => {
 iniciarServidor();
 
 module.exports = app;
-

@@ -3,6 +3,19 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // Verificar existência da tabela itens_comanda antes de criar triggers
+    await queryInterface.sequelize.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_class WHERE relname = 'itens_comanda' AND relkind = 'r'
+        ) THEN
+          RAISE EXCEPTION 'Tabela "itens_comanda" não existe. Execute a migration que cria a tabela antes de criar triggers.';
+        END IF;
+      END;
+      $$;
+    `);
+
     // TRIGGER 1: Atualizar subtotal do item_comanda automaticamente
     await queryInterface.sequelize.query(`
       CREATE OR REPLACE FUNCTION atualizar_subtotal_item()
@@ -112,4 +125,3 @@ module.exports = {
     await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS registrar_datas_producao();');
   }
 };
-

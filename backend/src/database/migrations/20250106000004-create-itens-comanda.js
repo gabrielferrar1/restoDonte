@@ -84,57 +84,7 @@ module.exports = {
     await queryInterface.addIndex('itens_comanda', ['status_producao']);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface, _Sequelize) {
     await queryInterface.dropTable('itens_comanda');
   }
 };
-'use strict';
-
-/** @type {import('sequelize-cli').Migration} */
-module.exports = {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('users', {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-        allowNull: false
-      },
-      nome: {
-        type: Sequelize.STRING(100),
-        allowNull: false
-      },
-      email: {
-        type: Sequelize.STRING(100),
-        allowNull: false,
-        unique: true
-      },
-      senha: {
-        type: Sequelize.STRING(255),
-        allowNull: false
-      },
-      ativo: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
-      },
-      created_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      updated_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
-    });
-
-    // Adicionar índice no email para melhor performance
-    await queryInterface.addIndex('users', ['email']);
-  },
-
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('users');
-  }
-};
-
