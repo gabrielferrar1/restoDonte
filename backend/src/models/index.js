@@ -1,12 +1,9 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const Sequelize = require('sequelize');
 const process = require('process');
-const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/database.js')[env];
+const config = require('../config/database.js')[env];
 const db = {};
 
 let sequelize;
@@ -16,24 +13,20 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
-fs
-  .readdirSync(__dirname)
-  .filter(file => {
-    return (
-      file.indexOf('.') !== 0 &&
-      file !== basename &&
-      file.slice(-3) === '.js' &&
-      file.indexOf('.test.js') === -1
-    );
-  })
-  .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-    db[model.name] = model;
-  });
+// Carregar modelos explicitamente para evitar divergências de filesystem
+const Usuario = require('./Usuario')(sequelize, Sequelize.DataTypes);
+const ItemCardapio = require('./ItemCardapio')(sequelize, Sequelize.DataTypes);
+const Comanda = require('./Comanda')(sequelize, Sequelize.DataTypes);
+const ItemComanda = require('./ItemComanda')(sequelize, Sequelize.DataTypes);
 
-Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
+db.Usuario = Usuario;
+db.ItemCardapio = ItemCardapio;
+db.Comanda = Comanda;
+db.ItemComanda = ItemComanda;
+
+[Usuario, ItemCardapio, Comanda, ItemComanda].forEach(modelo => {
+  if (modelo.associate) {
+    modelo.associate(db);
   }
 });
 
