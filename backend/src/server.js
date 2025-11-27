@@ -59,10 +59,8 @@ app.use((erro, req, res, next) => {
 });
 
 // Iniciar servidor
-const iniciarServidor = async () => {
-  try {
-    // Testar conexão com o banco de dados
-    await sequelize.authenticate();
+sequelize.authenticate()
+  .then(() => {
     console.log('Conexão com o banco de dados estabelecida com sucesso!');
 
     // Sincronizar modelos (apenas em desenvolvimento)
@@ -70,8 +68,7 @@ const iniciarServidor = async () => {
       // await sequelize.sync({ alter: false });
       console.log('Modelos sincronizados');
     }
-    
-    // Iniciar servidor
+
     app.listen(PORTA, HOST, () => {
       const publicHost = process.env.INSTANCE_PUBLIC_IP || HOST;
       console.log(`Servidor rodando em http://${publicHost}:${PORTA}`);
@@ -85,26 +82,10 @@ const iniciarServidor = async () => {
       console.log('  - GET    /api/producao/cozinha');
       console.log('  - GET    /api/relatorios/diario');
     });
-  } catch (erro) {
+  })
+  .catch(erro => {
     console.error('Erro ao iniciar o servidor:', erro);
     process.exit(1);
-  }
-};
-
-// Tratamento de sinais de encerramento
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM recebido. Encerrando servidor...');
-  await sequelize.close();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  console.log('SIGINT recebido. Encerrando servidor...');
-  await sequelize.close();
-  process.exit(0);
-});
-
-// Iniciar
-iniciarServidor();
+  });
 
 module.exports = app;
