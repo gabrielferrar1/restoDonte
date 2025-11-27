@@ -51,7 +51,7 @@ FRONTEND_URL=http://177.71.170.240:19006
 
 # Segurança
 JWT_SECRET=uma_string_secreta_forte
-NODE_ENV=production
+NODE_ENV=producao
 ```
 
 Observações:
