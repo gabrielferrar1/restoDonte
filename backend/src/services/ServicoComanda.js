@@ -72,12 +72,16 @@ class ServicoComanda {
     if (comanda.status !== 'ABERTA') {
       throw new Error('Não é possível adicionar itens em uma comanda fechada');
     }
+
     if (!dados.item_cardapio_id) {
       throw new Error('Item do cardápio é obrigatório');
     }
-    if (!dados.quantidade || dados.quantidade < 1) {
+
+    const quantidade = dados.quantidade || 1;
+    if (quantidade < 1) {
       throw new Error('Quantidade deve ser no mínimo 1');
     }
+
     const itemCardapio = await ItemCardapio.findByPk(dados.item_cardapio_id);
     if (!itemCardapio) {
       throw new Error('Item do cardápio não encontrado');
@@ -85,22 +89,39 @@ class ServicoComanda {
     if (!itemCardapio.ativo) {
       throw new Error('Item do cardápio não está disponível');
     }
-    const itemComanda = await ItemComanda.create({
-      comanda_id: comandaId,
-      item_cardapio_id: dados.item_cardapio_id,
-      quantidade: dados.quantidade,
-      preco_unitario: itemCardapio.preco,
-      subtotal: itemCardapio.preco * dados.quantidade,
-      observacoes: dados.observacoes,
-      status_producao: 'PENDENTE'
+
+    const itemExistente = await ItemComanda.findOne({
+      where: {
+        comanda_id: comandaId,
+        item_cardapio_id: dados.item_cardapio_id,
+        status_producao: { [Op.ne]: 'ENTREGUE' } // Op.ne = Not Equal
+      }
     });
-    const itemCriado = await ItemComanda.findByPk(itemComanda.id, {
+
+    let itemComanda;
+    if (itemExistente) {
+      itemExistente.quantidade += quantidade;
+      await itemExistente.save();
+      itemComanda = itemExistente;
+    } else {
+      itemComanda = await ItemComanda.create({
+        comanda_id: comandaId,
+        item_cardapio_id: dados.item_cardapio_id,
+        quantidade: quantidade,
+        preco_unitario: itemCardapio.preco,
+        observacoes: dados.observacoes,
+        status_producao: 'PENDENTE'
+      });
+    }
+
+    const itemResult = await ItemComanda.findByPk(itemComanda.id, {
       include: [{
         model: ItemCardapio,
         as: 'item_cardapio'
       }]
     });
-    return itemCriado;
+
+    return itemResult;
   }
   async fecharComanda(comandaId) {
     const comanda = await this.buscarPorId(comandaId);
@@ -128,6 +149,66 @@ class ServicoComanda {
       status: 'PAGA'
     });
     return await this.buscarPorId(comandaId);
+  }
+  async removerItem(comandaId, itemComandaId) {
+    const comanda = await this.buscarPorId(comandaId);
+    if (comanda.status !== 'ABERTA') {
+      throw new Error('Não é possível remover itens de uma comanda fechada');
+    }
+
+    const itemComanda = await ItemComanda.findOne({
+      where: {
+        id: itemComandaId,
+        comanda_id: comandaId
+      }
+    });
+
+    if (!itemComanda) {
+      throw new Error('Item não encontrado nesta comanda');
+    }
+
+    if (['EM_PRODUCAO', 'PRONTO', 'ENTREGUE'].includes(itemComanda.status_producao)) {
+      throw new Error('Não é possível remover um item que já está em produção, pronto ou entregue.');
+    }
+
+    await itemComanda.destroy();
+
+    return { mensagem: 'Item removido com sucesso' };
+  }
+
+  async atualizarQuantidadeItem(comandaId, itemComandaId, novaQuantidade) {
+    const comanda = await this.buscarPorId(comandaId);
+    if (comanda.status !== 'ABERTA') {
+      throw new Error('Não é possível atualizar itens de uma comanda fechada');
+    }
+
+    if (novaQuantidade === undefined || novaQuantidade < 0) {
+      throw new Error('A nova quantidade é obrigatória e não pode ser negativa.');
+    }
+
+    const itemComanda = await ItemComanda.findOne({
+      where: {
+        id: itemComandaId,
+        comanda_id: comandaId
+      }
+    });
+
+    if (!itemComanda) {
+      throw new Error('Item não encontrado nesta comanda');
+    }
+
+    if (['EM_PRODUCAO', 'PRONTO', 'ENTREGUE'].includes(itemComanda.status_producao)) {
+      throw new Error('Não é possível alterar a quantidade de um item que já está em produção, pronto ou entregue.');
+    }
+
+    if (novaQuantidade === 0) {
+      await itemComanda.destroy();
+      return { mensagem: 'Item removido com sucesso (quantidade 0)' };
+    } else {
+      itemComanda.quantidade = novaQuantidade;
+      await itemComanda.save();
+      return itemComanda;
+    }
   }
 }
 module.exports = new ServicoComanda();

@@ -2,22 +2,43 @@ require('dotenv').config();
 
 module.exports = {
     development: {
+        username: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        database: process.env.DB_NAME || 'restodonte',
+        host: process.env.DB_HOST || 'localhost',
+        port: process.env.DB_PORT || 5432,
+        dialect: 'postgres',
+        logging: console.log,
+        // SSL apenas se DB_SSL estiver explicitamente definido como 'true'
+        dialectOptions: process.env.DB_SSL === 'true' ? {
+            ssl: {
+                require: true,
+                rejectUnauthorized: false
+            }
+        } : {}
+    },
+    test: {
+        username: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        database: process.env.DB_NAME_TEST || 'restodonte_test',
+        host: process.env.DB_HOST || 'localhost',
+        port: process.env.DB_PORT || 5432,
+        dialect: 'postgres',
+        logging: false
+    },
+    production: {
         username: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
         host: process.env.DB_HOST,
+        port: process.env.DB_PORT || 5432,
         dialect: 'postgres',
+        logging: false,
         dialectOptions: {
             ssl: {
                 require: true,
                 rejectUnauthorized: false
             }
         }
-    },
-    teste: {
-        // Configurações para ambiente de teste
-    },
-    producao: {
-        // Configurações para ambiente de produção
     }
 };

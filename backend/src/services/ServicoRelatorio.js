@@ -1,9 +1,7 @@
 const { sequelize } = require('../models');
 
 class ServicoRelatorio {
-  /**
-   * Relatório de vendas diárias usando stored procedure
-   */
+
   async relatorioVendasDiarias(dataInicio, dataFim) {
     if (!dataInicio || !dataFim) {
       throw new Error('Data de início e fim são obrigatórias');
@@ -19,9 +17,7 @@ class ServicoRelatorio {
     return resultados;
   }
 
-  /**
-   * Itens mais vendidos usando stored procedure
-   */
+
   async itensMaisVendidos(dataInicio, dataFim, limite = 10) {
     if (!dataInicio || !dataFim) {
       throw new Error('Data de início e fim são obrigatórias');
@@ -37,15 +33,11 @@ class ServicoRelatorio {
     return resultados;
   }
 
-  /**
-   * Relatório simplificado do dia atual
-   */
+
   async relatorioDiarioSimplificado() {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    const amanha = new Date(hoje);
-    amanha.setDate(amanha.getDate() + 1);
 
     const dataInicio = hoje.toISOString().split('T')[0];
     const dataFim = hoje.toISOString().split('T')[0];
@@ -66,9 +58,6 @@ class ServicoRelatorio {
     };
   }
 
-  /**
-   * Relatório detalhado de período
-   */
   async relatorioPeriodo(dataInicio, dataFim) {
     if (!dataInicio || !dataFim) {
       throw new Error('Data de início e fim são obrigatórias');
@@ -77,7 +66,6 @@ class ServicoRelatorio {
     const vendas = await this.relatorioVendasDiarias(dataInicio, dataFim);
     const itensMaisVendidos = await this.itensMaisVendidos(dataInicio, dataFim, 20);
 
-    // Calcular totais do período
     const totais = vendas.reduce((acc, dia) => ({
       total_comandas: acc.total_comandas + parseInt(dia.total_comandas || 0),
       total_vendas: acc.total_vendas + parseFloat(dia.total_vendas || 0),

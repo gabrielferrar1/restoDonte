@@ -5,7 +5,7 @@ const { sequelize } = require('./models');
 const rotas = require('./routes');
 
 const app = express();
-const PORTA = process.env.PORT || 3000;
+const PORTA = process.env.API_PORT || 3333;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Configurar CORS: aceitar FRONTEND_URL em produção ou todas as origens em desenvolvimento
@@ -49,7 +49,7 @@ app.use((req, res) => {
 });
 
 // Tratamento de erros global
-app.use((erro, req, res, next) => {
+app.use((erro, req, res) => {
   console.error('Erro:', erro);
   res.status(500).json({
     sucesso: false,
@@ -63,11 +63,6 @@ sequelize.authenticate()
   .then(() => {
     console.log('Conexão com o banco de dados estabelecida com sucesso!');
 
-    // Sincronizar modelos (apenas em desenvolvimento)
-    if (process.env.NODE_ENV === 'development') {
-      // await sequelize.sync({ alter: false });
-      console.log('Modelos sincronizados');
-    }
 
     app.listen(PORTA, HOST, () => {
       const publicHost = process.env.INSTANCE_PUBLIC_IP || HOST;

@@ -26,6 +26,14 @@ module.exports = (sequelize, DataTypes) => {
     ativo: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    token_recuperacao_senha: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    data_expiracao_token: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'usuarios',
@@ -34,10 +42,5 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: 'atualizado_em'
   });
 
-  Usuario.associate = function(models) {
-    // Associações podem ser adicionadas aqui se necessário
-  };
-
   return Usuario;
 };
-

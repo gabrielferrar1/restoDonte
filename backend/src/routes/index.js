@@ -7,6 +7,7 @@ const rotasCardapio = require('./cardapio.routes');
 const rotasComanda = require('./comanda.routes');
 const rotasProducao = require('./producao.routes');
 const rotasRelatorio = require('./relatorio.routes');
+const rotasUsuario = require('./usuarios.routes');
 
 // Rota de status da API
 roteador.get('/', (req, res) => {
@@ -16,6 +17,7 @@ roteador.get('/', (req, res) => {
     versao: '1.0.0',
     endpoints: {
       autenticacao: '/api/autenticacao',
+      usuarios: '/api/usuarios',
       cardapio: '/api/cardapio',
       comandas: '/api/comandas',
       producao: '/api/producao',
@@ -26,6 +28,7 @@ roteador.get('/', (req, res) => {
 
 // Registrar rotas
 roteador.use('/autenticacao', rotasAutenticacao);
+roteador.use('/usuarios', rotasUsuario);
 roteador.use('/cardapio', rotasCardapio);
 roteador.use('/comandas', rotasComanda);
 roteador.use('/producao', rotasProducao);

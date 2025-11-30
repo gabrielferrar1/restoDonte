@@ -60,7 +60,39 @@ class ControladorAutenticacao {
       });
     }
   }
+
+
+  async solicitarRecuperacaoSenha(req, res) {
+    try {
+      const { email } = req.body;
+      const resultado = await ServicoAutenticacao.solicitarRecuperacaoSenha(email);
+      res.json({
+        sucesso: true,
+        dados: resultado
+      });
+    } catch (erro) {
+      res.status(400).json({
+        sucesso: false,
+        mensagem: erro.message
+      });
+    }
+  }
+
+  async resetarSenha(req, res) {
+    try {
+      const { email, token_recuperacao_senha, nova_senha } = req.body;
+      const resultado = await ServicoAutenticacao.resetarSenha(email, token_recuperacao_senha, nova_senha);
+      res.json({
+        sucesso: true,
+        dados: resultado
+      });
+    } catch (erro) {
+      res.status(400).json({
+        sucesso: false,
+        mensagem: erro.message
+      });
+    }
+  }
 }
 
 module.exports = new ControladorAutenticacao();
-

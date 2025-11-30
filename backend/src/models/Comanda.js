@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
     valor_total: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      defaultValue: 0,
+      defaultValue: sequelize.literal('0.00'),
       comment: 'Calculado automaticamente pela trigger'
     },
     observacoes: {

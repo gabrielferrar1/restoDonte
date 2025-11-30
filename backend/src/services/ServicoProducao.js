@@ -2,10 +2,7 @@ const { ItemComanda, ItemCardapio, Comanda } = require('../models');
 const { Op } = require('sequelize');
 
 class ServicoProducao {
-  /**
-   * Listar pedidos pendentes para Copa ou Cozinha
-   * @param {string} setor - 'BEBIDA' para Copa, 'PRATO' para Cozinha
-   */
+
   async listarPedidosPorSetor(setor) {
     if (!['PRATO', 'BEBIDA'].includes(setor)) {
       throw new Error('Setor deve ser PRATO (Cozinha) ou BEBIDA (Copa)');
@@ -35,9 +32,7 @@ class ServicoProducao {
     return itens;
   }
 
-  /**
-   * Buscar item específico da comanda
-   */
+
   async buscarItemComanda(id) {
     const item = await ItemComanda.findByPk(id, {
       include: [
@@ -59,9 +54,7 @@ class ServicoProducao {
     return item;
   }
 
-  /**
-   * Iniciar produção de um item
-   */
+
   async iniciarProducao(itemComandaId) {
     const item = await this.buscarItemComanda(itemComandaId);
 
@@ -70,16 +63,13 @@ class ServicoProducao {
     }
 
     await item.update({
-      status_producao: 'EM_PRODUCAO',
-      data_producao_iniciada: new Date()
+      status_producao: 'EM_PRODUCAO'
     });
 
     return await this.buscarItemComanda(itemComandaId);
   }
 
-  /**
-   * Marcar item como pronto
-   */
+
   async marcarComoPronto(itemComandaId) {
     const item = await this.buscarItemComanda(itemComandaId);
 
@@ -88,16 +78,13 @@ class ServicoProducao {
     }
 
     await item.update({
-      status_producao: 'PRONTO',
-      data_producao_finalizada: new Date()
+      status_producao: 'PRONTO'
     });
 
     return await this.buscarItemComanda(itemComandaId);
   }
 
-  /**
-   * Marcar item como entregue (garçom entregou para o cliente)
-   */
+
   async marcarComoEntregue(itemComandaId) {
     const item = await this.buscarItemComanda(itemComandaId);
 
@@ -106,16 +93,12 @@ class ServicoProducao {
     }
 
     await item.update({
-      status_producao: 'ENTREGUE',
-      data_entrega: new Date()
+      status_producao: 'ENTREGUE'
     });
 
     return await this.buscarItemComanda(itemComandaId);
   }
 
-  /**
-   * Atualizar status diretamente (útil para corrigir problemas)
-   */
   async atualizarStatus(itemComandaId, novoStatus) {
     const statusValidos = ['PENDENTE', 'EM_PRODUCAO', 'PRONTO', 'ENTREGUE'];
 
@@ -132,9 +115,6 @@ class ServicoProducao {
     return await this.buscarItemComanda(itemComandaId);
   }
 
-  /**
-   * Obter estatísticas de produção
-   */
   async obterEstatisticas(setor = null) {
     const includeOnde = {};
 

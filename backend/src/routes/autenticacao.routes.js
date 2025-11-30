@@ -7,5 +7,8 @@ roteador.post('/login', ControladorAutenticacao.login);
 roteador.post('/registrar', ControladorAutenticacao.registrar);
 roteador.get('/verificar', ControladorAutenticacao.verificarToken);
 
-module.exports = roteador;
+// Recuperação de senha
+roteador.post('/esqueci-minha-senha', ControladorAutenticacao.solicitarRecuperacaoSenha);
+roteador.post('/resetar-senha', ControladorAutenticacao.resetarSenha);
 
+module.exports = roteador;

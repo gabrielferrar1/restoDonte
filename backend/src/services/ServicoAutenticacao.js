@@ -16,7 +16,7 @@ class ServicoAutenticacao {
     }
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email, nome: usuario.nome },
-      process.env.JWT_SECRET || 'seu_secret_aqui_mudar_em_producao',
+      process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
     return {
@@ -54,10 +54,68 @@ class ServicoAutenticacao {
   }
   verificarToken(token) {
     try {
-      return jwt.verify(token, process.env.JWT_SECRET || 'seu_secret_aqui_mudar_em_producao');
+      return jwt.verify(token, process.env.JWT_SECRET);
     } catch (erro) {
       throw new Error('Token inválido ou expirado');
     }
+  }
+  async solicitarRecuperacaoSenha(email) {
+    if (!email) {
+      throw new Error('Email é obrigatório');
+    }
+
+    const usuario = await Usuario.findOne({ where: { email, ativo: true } });
+    if (!usuario) {
+      throw new Error('Usuário não encontrado ou inativo');
+    }
+
+    const tokenRecuperacao = jwt.sign(
+      { id: usuario.id, email: usuario.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    const dataExpiracao = new Date(Date.now() + 60 * 60 * 1000); // 1 hora à frente
+
+    usuario.token_recuperacao_senha = tokenRecuperacao;
+    usuario.data_expiracao_token = dataExpiracao;
+    await usuario.save();
+
+    // Em um sistema real, enviaríamos este token por email.
+    return {
+      mensagem: 'Token de recuperação de senha gerado com sucesso',
+      token_recuperacao_senha: tokenRecuperacao
+    };
+  }
+  async resetarSenha(email, tokenRecuperacao, novaSenha) {
+    if (!email || !tokenRecuperacao || !novaSenha) {
+      throw new Error('Email, token de recuperação e nova senha são obrigatórios');
+    }
+
+    const usuario = await Usuario.findOne({ where: { email } });
+    if (!usuario || !usuario.token_recuperacao_senha) {
+      throw new Error('Solicitação de recuperação de senha não encontrada');
+    }
+
+    if (usuario.token_recuperacao_senha !== tokenRecuperacao) {
+      throw new Error('Token de recuperação de senha inválido');
+    }
+
+    if (!usuario.data_expiracao_token || usuario.data_expiracao_token < new Date()) {
+      throw new Error('Token de recuperação de senha expirado');
+    }
+
+    if (novaSenha.length < 6) {
+      throw new Error('A nova senha deve ter no mínimo 6 caracteres');
+    }
+
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
+    usuario.senha = senhaHash;
+    usuario.token_recuperacao_senha = null;
+    usuario.data_expiracao_token = null;
+    await usuario.save();
+
+    return { mensagem: 'Senha atualizada com sucesso' };
   }
 }
 module.exports = new ServicoAutenticacao();

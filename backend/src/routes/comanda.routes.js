@@ -10,8 +10,9 @@ roteador.get('/', ControladorComanda.listar);
 roteador.get('/:id', ControladorComanda.buscarPorId);
 roteador.post('/', ControladorComanda.abrir);
 roteador.post('/:id/itens', ControladorComanda.adicionarItem);
+roteador.delete('/:id/itens/:itemComandaId', ControladorComanda.removerItem);
+roteador.patch('/:id/itens/:itemComandaId', ControladorComanda.atualizarQuantidadeItem);
 roteador.put('/:id/fechar', ControladorComanda.fechar);
 roteador.put('/:id/pagar', ControladorComanda.registrarPagamento);
 
 module.exports = roteador;
-
