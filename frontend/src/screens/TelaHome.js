@@ -1,130 +1,117 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import { CORES, ESPACAMENTOS, FONTES, BORDAS } from '../constants/tema';
+import Botao from '../components/Botao';
+import MenuCard from '../components/MenuCard';
 
 export default function TelaHome({ navigation }) {
   const { userInfo, logout } = useAuth();
 
-  const MenuCard = ({ titulo, descricao, onPress }) => (
-    <TouchableOpacity style={estilos.cardMenu} onPress={onPress}>
-      <Text style={estilos.cardIcone}>🍽️</Text>
-      <Text style={estilos.cardTitulo}>{titulo}</Text>
-      <Text style={estilos.cardDescricao}>{descricao}</Text>
-    </TouchableOpacity>
-  );
-
   return (
-    <View style={estilos.container}>
-      <Text style={estilos.titulo}>Painel RestôDonte</Text>
-      <Text style={estilos.subtitulo}>Escolha uma área para começar a trabalhar.</Text>
-
-      {userInfo && (
-        <Text style={estilos.usuario}>Usuário logado: {userInfo.nome} ({userInfo.email})</Text>
-      )}
+    <ScrollView style={estilos.container} contentContainerStyle={estilos.conteudo}>
+      <View style={estilos.cabecalho}>
+        <Text style={estilos.titulo}>RestôDonte</Text>
+        <Text style={estilos.subtitulo}>Sistema de Gestão de Restaurante</Text>
+        {userInfo && (
+          <View style={estilos.usuarioContainer}>
+            <MaterialIcons name="person" size={16} color={CORES.textoMedio} />
+            <Text style={estilos.usuarioTexto}>
+              {userInfo.nome} • {userInfo.email}
+            </Text>
+          </View>
+        )}
+      </View>
 
       <View style={estilos.gridMenu}>
         <MenuCard
           titulo="Cardápio"
-          descricao="Itens de pratos e bebidas."
-          onPress={() => navigation.navigate('Cardápio')}
+          descricao="Gerencie pratos e bebidas"
+          icone="restaurant-menu"
+          cor={CORES.primaria}
+          onPress={() => navigation.navigate('Cardapio')}
         />
         <MenuCard
           titulo="Pedidos"
-          descricao="Abertura e acompanhamento de pedidos."
-          onPress={() => navigation.navigate('Pedidos')}
+          descricao="Comandas e mesas"
+          icone="receipt-long"
+          cor={CORES.info}
+          onPress={() => navigation.navigate('Comandas')}
         />
         <MenuCard
           titulo="Produção"
-          descricao="Fila de preparo na Copa e Cozinha."
-          onPress={() => navigation.navigate('Produção')}
+          descricao="Copa e Cozinha"
+          icone="kitchen"
+          cor={CORES.sucesso}
+          onPress={() => navigation.navigate('Producao')}
         />
         <MenuCard
-          titulo="Relatório"
-          descricao="Resumo das vendas do dia."
-          onPress={() => navigation.navigate('Relatório')}
+          titulo="Relatórios"
+          descricao="Vendas e estatísticas"
+          icone="assessment"
+          cor={CORES.alerta}
+          onPress={() => navigation.navigate('Relatorio')}
         />
       </View>
 
-      <TouchableOpacity style={estilos.botaoSair} onPress={logout}>
-        <Text style={estilos.textoBotaoSair}>Sair</Text>
-      </TouchableOpacity>
-    </View>
+      <Botao
+        titulo="Sair"
+        onPress={logout}
+        variante="secundario"
+        larguraCompleta
+        estilo={estilos.botaoSair}
+      />
+    </ScrollView>
   );
 }
 
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 16,
-    paddingTop: 32,
+    backgroundColor: CORES.fundoClaro,
+  },
+  conteudo: {
+    padding: ESPACAMENTOS.grande,
+  },
+  cabecalho: {
+    alignItems: 'center',
+    marginBottom: ESPACAMENTOS.grande,
   },
   titulo: {
-    fontSize: 24,
+    fontSize: FONTES.hero,
     fontWeight: 'bold',
-    color: '#E65100',
-    marginBottom: 4,
-    textAlign: 'center',
+    color: CORES.primaria,
+    marginBottom: ESPACAMENTOS.minimo,
   },
   subtitulo: {
-    fontSize: 14,
-    color: '#6D4C41',
-    marginBottom: 12,
+    fontSize: FONTES.media,
+    color: CORES.textoMedio,
+    marginBottom: ESPACAMENTOS.medio,
     textAlign: 'center',
   },
-  usuario: {
-    fontSize: 13,
-    color: '#4E342E',
-    marginBottom: 16,
-    textAlign: 'center',
+  usuarioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CORES.fundoBranco,
+    paddingHorizontal: ESPACAMENTOS.medio,
+    paddingVertical: ESPACAMENTOS.pequeno,
+    borderRadius: BORDAS.circular,
+    borderWidth: 1,
+    borderColor: CORES.bordaClara,
+  },
+  usuarioTexto: {
+    fontSize: FONTES.pequena,
+    color: CORES.textoMedio,
+    marginLeft: ESPACAMENTOS.minimo,
   },
   gridMenu: {
-    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingTop: 4,
-  },
-  cardMenu: {
-    width: '47%',
-    aspectRatio: 0.85,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#FFCC80',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardIcone: {
-    fontSize: 22,
-    marginBottom: 4,
-  },
-  cardTitulo: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#E65100',
-    marginBottom: 2,
-    textAlign: 'center',
-  },
-  cardDescricao: {
-    fontSize: 10,
-    color: '#6D4C41',
-    textAlign: 'center',
+    marginBottom: ESPACAMENTOS.grande,
   },
   botaoSair: {
-    alignSelf: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#BF360C',
-  },
-  textoBotaoSair: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    marginTop: ESPACAMENTOS.medio,
   },
 });

@@ -1,214 +1,259 @@
-# RestôDonte - Backend
+# RestôDonte — Sistema de Restaurante
 
-Este é o repositório do backend e frontend para o aplicativo **RestôDonte**, o sistema de gerenciamento de comandas para restaurantes. Este projeto foi desenvolvido para o trabalho final das disciplinas de Programação II e Banco de Dados II.
+Aplicativo completo para gestão de restaurante com backend Node/Express + Sequelize/PostgreSQL (migrações, triggers e stored procedures) e frontend React Native (Expo).
 
-O servidor é construído com **Node.js**, **Express**, e utiliza o **Sequelize** como ORM para se comunicar com um banco de dados **PostgreSQL**.
+- Backend: API REST com autenticação JWT, cardápio, comandas, produção e relatórios.
+- Frontend: app móvel/web em React Native (Expo) consumindo a API.
 
-Para o desenvolvimento do frontend, utilizaremos **React Native** e **Expo** para criar uma aplicação móvel que se conecta a este backend.
+## Sumário
+- [Arquitetura](#arquitetura)
+- [Tecnologias](#tecnologias)
+- [Configuração do ambiente](#configuração-do-ambiente)
+- [Instalação e execução](#instalação-e-execução)
+- [Scripts úteis](#scripts-úteis)
+- [API — Endpoints principais](#api--endpoints-principais)
+- [Banco de dados — Migrações, Triggers e Stored Procedures](#banco-de-dados--migrações-triggers-e-stored-procedures)
+- [Estrutura de pastas](#estrutura-de-pastas)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
+- [Licença](#licença)
 
-## Visão rápida das rotas
+## Arquitetura
 
-- Todas as rotas do backend estão prefixadas por `/api`.
-- Exemplos:
-  - POST /api/autenticacao/login
-  - POST /api/autenticacao/registrar
-  - GET  /api/cardapio
-  - GET  /api/comandas
-  - GET  /api/producao/copa
-  - GET  /api/producao/cozinha
-  - GET  /api/relatorios/diario
+Frontend (React Native/Expo) → API (Express) → Serviços (Regras de negócio) → Sequelize (Models) → PostgreSQL
 
-Se o frontend se comunicar com o backend diretamente, ele deve usar a base URL do backend seguida de `/api` (por exemplo: `http://177.71.170.240:3000/api`).
+- Base path da API: `/api`
+- Fluxo típico: Tela → `frontend/src/api/api.js` → Rotas → Controladores → Serviços → Models → Banco
 
-## Pré-requisitos
+## Tecnologias
 
-Antes de começar, garanta que você tenha as seguintes ferramentas instaladas na sua instância AWS (EC2):
+Backend
+- Node.js, Express 5
+- Sequelize 6, sequelize-cli
+- PostgreSQL (dialeto `pg`)
+- Autenticação JWT (`jsonwebtoken`), hashing de senhas (`bcrypt`)
+- CORS, dotenv
+- Nodemon (dev)
 
-- Node.js (versão 18+ recomendada)
-- npm
-- (opcional) pm2 para gerenciar o processo em produção
+Frontend
+- React 19, React Native 0.81, Expo 54
+- React Navigation (stack/bottom-tabs)
+- Axios
+- AsyncStorage
+- React Native Web
 
-Além disso você precisa de uma instância de banco PostgreSQL (neste projeto usamos um endpoint RDS). Garanta que a EC2 consiga acessar o RDS (Security Groups e regras de firewall).
+## Configuração do ambiente
 
-## Variáveis de ambiente (arquivo .env)
+Pré‑requisitos
+- Node.js LTS e npm
+- PostgreSQL 13+ (local ou remoto)
+- Expo CLI (global) opcional para rodar no dispositivo/emulador
 
-Na pasta `backend` crie um arquivo `.env` com as variáveis abaixo. Substitua pelos seus valores reais (não comite esse arquivo em repositórios públicos):
+Variáveis de ambiente — Backend (`backend/.env`)
 
-```env
-# Banco de dados
-DB_HOST=database-1.cbsi22a6wumh.sa-east-1.rds.amazonaws.com
-DB_USER=seu_usuario
-DB_PASSWORD=sua_senha
-DB_NAME=restodonte
+Veja `backend/.env.example` como referência. Principais variáveis:
+- API_PORT (padrão 3333)
+- HOST (padrão 0.0.0.0)
+- FRONTEND_URL (origem autorizada em produção)
+- INSTANCE_PUBLIC_IP (para logs)
+- NODE_ENV (development|production)
+- DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+- DB_SSL ("true" para habilitar SSL)
+- JWT_SECRET (obrigatório)
 
-# Servidor
-PORT=3000
-HOST=0.0.0.0
-INSTANCE_PUBLIC_IP=177.71.170.240
+Variáveis de ambiente — Frontend (`frontend/.env` ou variáveis públicas Expo)
 
-# Frontend (origem permitida para CORS em producao)
-FRONTEND_URL=http://177.71.170.240:19006
+Veja `frontend/.env.example`.
+- EXPO_PUBLIC_ENV (local|emulador|production)
+- EXPO_PUBLIC_API_URL (quando usar production)
 
-# Segurança
-JWT_SECRET=uma_string_secreta_forte
-NODE_ENV=production
-```
+Configuração da conexão (Sequelize)
+- Arquivo: `backend/src/config/database.js`
+- Caminhos do CLI: `backend/.sequelizerc`
 
-Observações:
-- `DB_HOST` deve apontar para o endpoint do seu banco (ex.: RDS). No seu caso: `database-1.cbsi22a6wumh.sa-east-1.rds.amazonaws.com`.
-- `FRONTEND_URL` é usado para configuração de CORS em ambiente de produção. Ajuste para a URL do seu frontend.
-- `HOST=0.0.0.0` faz com que o servidor escute em todas as interfaces (necessário para acessar via IP público).
+## Instalação e execução
 
-## Passo a passo: deploy na sua instância AWS (EC2)
-
-Abaixo estão os comandos e etapas que você pode executar na sua instância EC2 para colocar o backend em funcionamento.
-
-1. Clone o repositório e entre na pasta do backend
+1) Clonar repositório
 
 ```bash
-# ajuste o URL do repositório conforme necessário
-git clone https://github.com/seu-usuario/restoDonte.git
-cd restoDonte/backend
+git clone <URL_DO_REPO>
+cd restoDonte
 ```
 
-2. Instale dependências
+2) Backend
 
 ```bash
+cd backend
 npm install
+# copiar e ajustar variáveis
+cp .env.example .env
+# criar banco (no psql)
+#   CREATE DATABASE restodonte;
+# migrar e popular
+npm run db:migrate
+npm run db:seed
+# opcional: testar conexão
+npm run db:test
+# rodar servidor
+npm run dev
+# API: http://localhost:3333/api
 ```
 
-3. Configure o arquivo `.env` conforme mostrado acima
+3) Frontend
 
 ```bash
-nano .env
-# cole as variáveis e salve
+cd ../frontend
+npm install
+# copiar e ajustar ambiente
+cp .env.example .env
+# iniciar Expo
+npm start
+# abrir no Android/iOS/web conforme necessidade
 ```
-
-4. Testar acesso ao banco (opcional, recomendado)
-
-Se `psql` estiver instalado, você pode testar a conexão direta ao RDS:
-
-```bash
-psql "postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME"
-```
-
-Se a conexão falhar, verifique:
-- Security Group do RDS (inbound rules): deve permitir conexões na porta 5432 a partir do IP/SG da sua EC2.
-- Firewall local da EC2 (ufw/iptables) permitindo saída para a porta 5432.
-
-5. Executar migrations e seeders
-
-```bash
-npx sequelize-cli db:migrate
-npx sequelize-cli db:seed:all
-```
-
-6. Abrir a porta no firewall da EC2 (exemplo usando ufw)
-
-```bash
-# permitir porta 3000 (ou a porta definida em PORT)
-sudo ufw allow 3000/tcp
-sudo ufw reload
-```
-
-Se você não usa `ufw`, ajuste as regras do seu firewall ou do Security Group da EC2.
-
-7. Iniciar o backend (modo produção)
-
-Opção simples (background com nohup):
-
-```bash
-NODE_ENV=production PORT=3000 HOST=0.0.0.0 npm start &
-```
-
-Opção recomendada (usando pm2):
-
-```bash
-npm install -g pm2
-pm2 start npm --name restodonte-backend -- start
-pm2 save
-pm2 status
-```
-
-8. Verificar logs e endpoints
-
-- Logs do pm2: `pm2 logs restodonte-backend`.
-- Testar rota raiz:
-
-```bash
-curl http://177.71.170.240:3000/
-```
-
-- Testar rota do cardápio:
-
-```bash
-curl http://177.71.170.240:3000/api/cardapio
-```
-
-## Configuração do RDS e Security Groups (AWS)
-
-- No console AWS, vá até RDS e selecione sua instância.
-- Verifique o Security Group associado.
-- Nas regras Inbound do Security Group do RDS, permita a porta 5432 com origem sendo o Security Group da sua EC2 (mais seguro) ou o IP público da EC2.
-- Evite abrir o banco para 0.0.0.0/0.
-
-## CORS e comunicação frontend → backend
-
-- Em produção o backend usa a variável `FRONTEND_URL` para restringir origens.
-- Garanta que o frontend faça chamadas para `http://177.71.170.240:3000/api` (ajuste a porta se diferente).
-- Se estiver testando com o Expo em modo tunnel ou em IP diferente, atualize `FRONTEND_URL` no `.env` ou use ambiente de desenvolvimento (`NODE_ENV !== 'production'`) que aceita origens dinâmicas.
-
-## Autenticação (JWT)
-
-- Para endpoints protegidos, envie o header: `Authorization: Bearer <token>`.
-- O token é gerado em `POST /api/autenticacao/login`.
-- Mantenha `JWT_SECRET` seguro em produção.
-
-## Testes com Postman / Insomnia
-
-- Cole a URL base: `http://177.71.170.240:3000/api` e use os endpoints listados.
-- Exemplo de login (body JSON):
-
-```json
-POST /api/autenticacao/login
-{
-  "email": "admin@restodonte.com",
-  "senha": "admin123"
-}
-```
-
-- Copie o token e inclua no header `Authorization: Bearer <token>` para endpoints protegidos.
-
-## Melhorias recomendadas para produção
-
-- Colocar o backend atrás de um proxy reverso (nginx) e configurar HTTPS com Let's Encrypt.
-- Manter as credenciais do banco e `JWT_SECRET` em um cofre de segredos (AWS Secrets Manager, Parameter Store, etc.) em vez de `.env` em texto plano.
-- Usar logs centralizados (CloudWatch) e monitoramento (pm2 + métricas ou serviços externos).
 
 ## Scripts úteis
 
-- `npm run dev` — Inicia o servidor com nodemon (desenvolvimento).
-- `npm start` — Inicia o servidor (produção).
-- `npx sequelize-cli db:migrate` — Aplica migrations.
-- `npx sequelize-cli db:seed:all` — Executa seeders.
+Backend (`backend/package.json`)
+- start: inicia API em modo produção
+- dev: inicia API com nodemon
+- db:test: testa conexão com o banco
+- db:migrate / db:migrate:undo / db:reset
+- db:seed / db:seed:undo
 
-## Estrutura do Projeto
+Frontend (`frontend/package.json`)
+- start / android / ios / web
+
+Raiz do repositório
+- `testar-funcionalidades.sh`: script de smoke test de integrações (login, cardápio, comanda, produção, relatório)
+
+## API — Endpoints principais
+
+Observações
+- Autenticação: Bearer JWT (exceto rotas públicas de autenticação)
+- Base: `http://localhost:3333/api`
+
+Autenticação (`/autenticacao`)
+- POST `/login` — login com email/senha
+- POST `/registrar` — cria usuário
+- GET `/verificar` — valida token
+- POST `/esqueci-minha-senha` — solicita token de recuperação
+- POST `/resetar-senha` — redefine senha com token
+
+Usuários (`/usuarios`) [protegido]
+- GET `/` — listar
+- GET `/:id` — buscar por id
+- PUT `/:id` — atualizar
+- PATCH `/:id/inativar` — inativar
+- PATCH `/:id/ativar` — reativar
+
+Cardápio (`/cardapio`) [protegido]
+- GET `/` — listar itens do cardápio
+- GET `/:id` — detalhe
+- POST `/` — criar item
+- PUT `/:id` — atualizar
+- DELETE `/:id` — remover
+- PATCH `/:id/ativar` — reativar/ativar
+
+Comandas (`/comandas`) [protegido]
+- GET `/` — listar comandas
+- GET `/:id` — detalhes (inclui itens)
+- POST `/` — abrir comanda
+- POST `/:id/itens` — adicionar item
+- PATCH `/:id/itens/:itemComandaId` — atualizar quantidade/observação
+- DELETE `/:id/itens/:itemComandaId` — remover item
+- PUT `/:id/fechar` — fechar comanda (usa regra de itens entregues)
+- PUT `/:id/pagar` — registrar pagamento
+
+Produção (`/producao`) [protegido]
+- GET `/copa` — fila da Copa (bebidas)
+- GET `/cozinha` — fila da Cozinha (pratos)
+- PUT `/:id/iniciar` — iniciar produção
+- PUT `/:id/pronto` — marcar como pronto
+- PUT `/:id/entregar` — marcar como entregue
+- PUT `/:id/status` — atualizar status
+- GET `/estatisticas` — estatísticas de produção
+
+Relatórios (`/relatorios`) [protegido]
+- GET `/vendas-diarias?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD` — usa `relatorio_vendas_diarias`
+- GET `/itens-mais-vendidos?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD&limite=10` — usa `itens_mais_vendidos`
+- GET `/diario` — resumo diário simplificado (usa as funções acima)
+- GET `/periodo?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD` — resumo por período
+
+Exemplo rápido (login)
+
+```bash
+curl -X POST http://localhost:3333/api/autenticacao/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@restodonte.com","senha":"admin123"}'
+```
+
+## Banco de dados — Migrações, Triggers e Stored Procedures
+
+Entidades principais
+- `usuarios` (id, nome, email, senha, ativo, token_recuperacao_senha, data_expiracao_token, criado_em, atualizado_em)
+- `itens_cardapio` (id, nome, descricao, preco, tipo: PRATO|BEBIDA, ativo, tempo_preparo_minutos, criado_em, atualizado_em)
+- `comandas` (id, numero_mesa, nome_cliente, status: ABERTA|FECHADA|PAGA, data_abertura, data_fechamento, valor_total, observacoes, criado_em, atualizado_em)
+- `itens_comanda` (id, comanda_id, item_cardapio_id, quantidade, preco_unitario, subtotal, status_producao, observacoes, datas de produção/entrega, timestamps)
+
+Migrações (ordem)
+1. `20250106000001-create-usuarios.js`
+2. `20250106000002-create-itens-cardapio.js`
+3. `20250106000003-create-comandas.js`
+4. `20250106000004-create-itens-comanda.js`
+5. `20250106000005-create-triggers-pt.js`
+6. `20250106000006-create-stored-procedures.js`
+7. `20251127022959-adicionar-campos-recuperacao-senha-usuarios.js`
+
+Triggers (arquivo: `create-triggers-pt.js`)
+- `atualizar_subtotal_item` (BEFORE INSERT/UPDATE em `itens_comanda`) — mantém `subtotal = quantidade * preco_unitario`.
+- `atualizar_valor_total_comanda` (AFTER INSERT/UPDATE/DELETE em `itens_comanda`) — recalcula `comandas.valor_total` somando subtotais.
+- `registrar_datas_producao` (BEFORE UPDATE de `status_producao` em `itens_comanda`) — carimba início, fim e entrega conforme mudança de status.
+
+Stored Procedures / Funções (arquivo: `create-stored-procedures.js`)
+- `relatorio_vendas_diarias(data_inicio DATE, data_fim DATE)`
+  - Retorna: data, total_comandas, total_vendas, total_itens_vendidos, ticket_medio.
+  - Usa status de comanda em ('FECHADA', 'PAGA').
+- `itens_mais_vendidos(data_inicio DATE, data_fim DATE, limite INTEGER DEFAULT 10)`
+  - Retorna: item_id, item_nome, tipo, quantidade_vendida, receita_total.
+- `fechar_comanda(comanda_id_param INTEGER)`
+  - Valida se comanda está ABERTA e se todos itens foram ENTREGUES; fecha e retorna resumo.
+- `pedidos_pendentes_por_setor(setor VARCHAR)`
+  - Lista pedidos pendentes por setor ('PRATO' = Cozinha, 'BEBIDA' = Copa).
+
+Seeders
+- `20250106000001-seed-usuarios.js` — cria admin (email: `admin@restodonte.com`, senha: `admin123`) e um garçom.
+- `20250106000002-seed-itens-cardapio.js` — popula itens de PRATO e BEBIDA com tempos de preparo.
+
+## Estrutura de pastas
 
 ```
-src/
-├── config/         # Arquivos de configuração (banco de dados, etc.)
-├── controllers/    # Controladores (lógica de requisição e resposta HTTP)
-├── database/       # Migrations e Seeders do Sequelize
-├── models/         # Modelos do Sequelize (representação das tabelas)
-├── routes/         # Definição das rotas da API
-|── seeders/        # dados iniciais para popular o banco
-└── services/       # Camada de serviço (regras de negócio)
+restoDonte/
+  testar-funcionalidades.sh
+  backend/
+    .sequelizerc
+    package.json
+    src/
+      server.js
+      config/database.js
+      controllers/*
+      services/*
+      models/*
+      middlewares/*
+      routes/*
+      database/
+        migrations/*
+        seeders/*
+  frontend/
+    package.json
+    App.js, index.js, app.json
+    src/
+      api/api.js
+      config/ambiente.js
+      components/*
+      contexts/*
+      navigation/*
+      screens/*
+      constants/*
+      assets/*
 ```
-
-## Fluxo de trabalho (branches e PR)
-
-Siga o fluxo já descrito no projeto: trabalhar em branches (`feature/`, `fix/`) e abrir Pull Requests para revisão antes de mesclar na `main`.
-
 ---
-
-Se quiser, eu atualizo também um arquivo `.env.example` no repositório e adiciono um script `deploy-check.sh` que executa verificações básicas (conexão DB, porta aberta, rotas principais respondendo). Deseja que eu adicione esses arquivos agora?

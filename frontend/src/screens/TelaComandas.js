@@ -1,99 +1,95 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import api from '../api/api';
+import { CORES, FONTES, ESPACAMENTOS } from '../constants/tema';
+import Botao from '../components/Botao';
+import ComandaCard from '../components/ComandaCard';
+import Card from '../components/Card';
 
 export default function TelaComandas() {
-  const [pedidos, setPedidos] = useState([]);
+  const [comandas, setComandas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [abrindoPedido, setAbrindoPedido] = useState(false);
+  const [erro, setErro] = useState('');
+  const navigation = useNavigation();
 
-  const carregarPedidos = async () => {
+  const carregarComandas = useCallback(async () => {
     try {
       setCarregando(true);
+      setErro('');
       const resposta = await api.get('/comandas');
-      // backend responde { sucesso, dados: [...] }
-      setPedidos(resposta.data.dados || []);
-    } catch (erro) {
-      console.error('Erro ao carregar pedidos:', erro.response?.data || erro.message);
-      Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
+
+      const dadosComandas = Array.isArray(resposta.data) ? resposta.data : (resposta.data?.dados || []);
+      setComandas(dadosComandas);
+    } catch (err) {
+      console.error('Erro ao carregar comandas:', err.response?.data || err.message);
+      setErro('Não foi possível carregar as comandas.');
     } finally {
       setCarregando(false);
     }
-  };
+  }, []);
 
-  const abrirNovoPedido = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      carregarComandas();
+    }, [carregarComandas])
+  );
+
+  const abrirNovaComanda = async () => {
     try {
-      setAbrindoPedido(true);
-      // Exemplo simples: abre pedido para mesa 1 sem cliente nomeado.
-      // Em uma próxima etapa, podemos abrir um formulário com número da mesa e nome do cliente.
       await api.post('/comandas', {
-        numero_mesa: 1,
-        nome_cliente: 'Mesa 1',
+        numero_mesa: Math.floor(Math.random() * 20) + 1,
       });
-      await carregarPedidos();
-    } catch (erro) {
-      console.error('Erro ao abrir novo pedido:', erro.response?.data || erro.message);
-      Alert.alert('Erro', 'Não foi possível abrir um novo pedido.');
-    } finally {
-      setAbrindoPedido(false);
+      await carregarComandas();
+    } catch (err) {
+      console.error('Erro ao abrir nova comanda:', err.response?.data || err.message);
+      setErro(err.response?.data?.erro || 'Não foi possível abrir uma nova comanda.');
     }
   };
 
-  useEffect(() => {
-    carregarPedidos();
-  }, []);
-
-  if (carregando) {
-    return (
-      <View style={estilos.containerCarregando}>
-        <ActivityIndicator size="large" color="#E65100" />
-      </View>
-    );
-  }
-
-  const renderizarPedido = ({ item }) => (
-    <TouchableOpacity style={estilos.cardPedido}>
-      <View style={estilos.linhaTitulo}>
-        <Text style={estilos.mesa}>Mesa {item.numero_mesa}</Text>
-        <Text style={estilos.status}>{item.status}</Text>
-      </View>
-      {item.nome_cliente ? (
-        <Text style={estilos.cliente}>Cliente: {item.nome_cliente}</Text>
-      ) : null}
-      <Text style={estilos.valor}>Total: R$ {Number(item.valor_total || 0).toFixed(2)}</Text>
-      <Text style={estilos.dica}>Toque para ver os detalhes do pedido.</Text>
-    </TouchableOpacity>
+  const renderizarComanda = ({ item }) => (
+    <ComandaCard
+      item={item}
+      onPress={() => navigation.navigate('DetalhesComanda', { comandaId: item.id })}
+      onActionComplete={carregarComandas}
+    />
   );
 
   return (
     <View style={estilos.container}>
-      <Text style={estilos.titulo}>Pedidos</Text>
-      <Text style={estilos.subtitulo}>
-        Acompanhe aqui os pedidos em aberto, fechados e pagos.
-      </Text>
-
-      <View style={estilos.linhaTopo}>
-        <TouchableOpacity
-          style={[estilos.botaoNovoPedido, abrindoPedido && estilos.botaoDesabilitado]}
-          onPress={abrirNovoPedido}
-          disabled={abrindoPedido}
-        >
-          <Text style={estilos.textoBotaoNovoPedido}>
-            {abrindoPedido ? 'Abrindo pedido...' : 'Abrir novo pedido'}
-          </Text>
-        </TouchableOpacity>
+      <View style={estilos.cabecalho}>
+        <View>
+          <Text style={estilos.titulo}>Comandas</Text>
+          <Text style={estilos.subtitulo}>Gerencie as comandas do restaurante</Text>
+        </View>
+        <Botao
+          titulo="Nova Comanda"
+          onPress={abrirNovaComanda}
+          tamanho="pequeno"
+        />
       </View>
 
-      <FlatList
-        data={pedidos}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={renderizarPedido}
-        refreshing={carregando}
-        onRefresh={carregarPedidos}
-        ListEmptyComponent={
-          <Text style={estilos.listaVazia}>Nenhum pedido encontrado.</Text>
-        }
-      />
+      {carregando && comandas.length === 0 ? (
+        <ActivityIndicator size="large" color={CORES.primaria} style={{ marginTop: ESPACAMENTOS.grande }} />
+      ) : (
+        <FlatList
+          data={comandas}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderizarComanda}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          ListEmptyComponent={
+            <Card estilo={estilos.listaVaziaContainer}>
+              <Text style={estilos.listaVaziaTexto}>
+                {erro ? erro : 'Nenhuma comanda encontrada.'}
+              </Text>
+              {erro ? <Botao titulo="Tentar Novamente" onPress={carregarComandas} variante="secundario" /> : null}
+            </Card>
+          }
+          refreshControl={
+            <RefreshControl refreshing={carregando} onRefresh={carregarComandas} tintColor={CORES.primaria} />
+          }
+        />
+      )}
     </View>
   );
 }
@@ -101,106 +97,33 @@ export default function TelaComandas() {
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: CORES.fundoClaro,
   },
-  containerCarregando: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF3E0',
-  },
-  titulo: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#E65100',
-    marginBottom: 4,
-  },
-  subtitulo: {
-    fontSize: 14,
-    color: '#6D4C41',
-    marginBottom: 12,
-  },
-  linhaTopo: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 8,
-  },
-  botaoNovoPedido: {
-    backgroundColor: '#E65100',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  textoBotaoNovoPedido: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  botaoDesabilitado: {
-    opacity: 0.7,
-  },
-  cardPedido: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#FFCC80',
-  },
-  linhaTitulo: {
+  cabecalho: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    alignItems: 'center',
+    padding: ESPACAMENTOS.grande,
+    backgroundColor: CORES.fundoBranco,
+    borderBottomWidth: 1,
+    borderBottomColor: CORES.bordaClara,
   },
-  mesa: {
-    fontSize: 16,
+  titulo: {
+    fontSize: FONTES.tituloGrande,
     fontWeight: 'bold',
-    color: '#4E342E',
+    color: CORES.textoEscuro,
   },
-  status: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#E65100',
+  subtitulo: {
+    fontSize: FONTES.media,
+    color: CORES.textoMedio,
   },
-  cliente: {
-    fontSize: 14,
-    color: '#6D4C41',
-    marginBottom: 2,
+  listaVaziaContainer: {
+    marginTop: ESPACAMENTOS.extraGrande,
+    alignItems: 'center',
+    gap: ESPACAMENTOS.medio,
   },
-  valor: {
-    fontSize: 14,
-    color: '#4E342E',
-    marginBottom: 8,
-  },
-  dica: {
-    marginTop: 6,
-    fontSize: 12,
-    color: '#8D6E63',
-  },
-  linhaAcoes: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-  },
-  botaoAcao: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  botaoDetalhes: {
-    backgroundColor: '#FFE0B2',
-  },
-  botaoAdicionar: {
-    backgroundColor: '#E65100',
-  },
-  textoBotaoAcao: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  listaVazia: {
-    marginTop: 16,
-    textAlign: 'center',
-    color: '#6D4C41',
+  listaVaziaTexto: {
+    fontSize: FONTES.media,
+    color: CORES.textoMedio,
   },
 });

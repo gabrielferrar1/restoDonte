@@ -1,6 +1,14 @@
 const { Comanda, ItemComanda, ItemCardapio } = require('../models');
 const { Op } = require('sequelize');
 class ServicoComanda {
+  async recalcularTotal(comandaId) {
+    const comanda = await Comanda.findByPk(comandaId, {
+      include: [{ model: ItemComanda, as: 'itens' }]
+    });
+    if (!comanda) return;
+    const total = comanda.itens.reduce((acc, it) => acc + Number(it.subtotal || 0), 0);
+    await comanda.update({ valor_total: Number(total.toFixed(2)) });
+  }
   async listarTodas(filtros = {}) {
     const onde = {};
     if (filtros.status) {
@@ -29,20 +37,14 @@ class ServicoComanda {
     return comandas;
   }
   async buscarPorId(id) {
-    const comanda = await Comanda.findByPk(id, {
+    await this.recalcularTotal(id);
+    return await Comanda.findByPk(id, {
       include: [{
         model: ItemComanda,
         as: 'itens',
-        include: [{
-          model: ItemCardapio,
-          as: 'item_cardapio'
-        }]
+        include: [{ model: ItemCardapio, as: 'item_cardapio' }]
       }]
     });
-    if (!comanda) {
-      throw new Error('Comanda não encontrada');
-    }
-    return comanda;
   }
   async abrir(dados) {
     if (!dados.numero_mesa) {
@@ -65,6 +67,7 @@ class ServicoComanda {
       data_abertura: new Date(),
       valor_total: 0
     });
+    await this.recalcularTotal(comanda.id);
     return comanda;
   }
   async adicionarItem(comandaId, dados) {
@@ -100,28 +103,29 @@ class ServicoComanda {
 
     let itemComanda;
     if (itemExistente) {
+      // Incrementa quantidade e recalcula subtotal
       itemExistente.quantidade += quantidade;
+      itemExistente.subtotal = (Number(itemExistente.preco_unitario) * Number(itemExistente.quantidade)).toFixed(2);
       await itemExistente.save();
       itemComanda = itemExistente;
     } else {
+      const precoUnitario = Number(itemCardapio.preco);
+      const subtotal = (precoUnitario * Number(quantidade)).toFixed(2);
       itemComanda = await ItemComanda.create({
         comanda_id: comandaId,
         item_cardapio_id: dados.item_cardapio_id,
         quantidade: quantidade,
-        preco_unitario: itemCardapio.preco,
+        preco_unitario: precoUnitario,
+        subtotal: subtotal,
         observacoes: dados.observacoes,
         status_producao: 'PENDENTE'
       });
     }
 
-    const itemResult = await ItemComanda.findByPk(itemComanda.id, {
-      include: [{
-        model: ItemCardapio,
-        as: 'item_cardapio'
-      }]
+    await this.recalcularTotal(comandaId);
+    return await ItemComanda.findByPk(itemComanda.id, {
+      include: [{ model: ItemCardapio, as: 'item_cardapio' }]
     });
-
-    return itemResult;
   }
   async fecharComanda(comandaId) {
     const comanda = await this.buscarPorId(comandaId);
@@ -134,10 +138,8 @@ class ServicoComanda {
     if (itensNaoEntregues.length > 0) {
       throw new Error('Não é possível fechar a comanda. Existem itens que não foram entregues.');
     }
-    await comanda.update({
-      status: 'FECHADA',
-      data_fechamento: new Date()
-    });
+    await comanda.update({ status: 'FECHADA', data_fechamento: new Date() });
+    await this.recalcularTotal(comandaId);
     return await this.buscarPorId(comandaId);
   }
   async registrarPagamento(comandaId) {
@@ -145,9 +147,8 @@ class ServicoComanda {
     if (comanda.status !== 'FECHADA') {
       throw new Error('A comanda precisa estar fechada para registrar o pagamento');
     }
-    await comanda.update({
-      status: 'PAGA'
-    });
+    await comanda.update({ status: 'PAGA' });
+    await this.recalcularTotal(comandaId);
     return await this.buscarPorId(comandaId);
   }
   async removerItem(comandaId, itemComandaId) {
@@ -172,10 +173,9 @@ class ServicoComanda {
     }
 
     await itemComanda.destroy();
-
+    await this.recalcularTotal(comandaId);
     return { mensagem: 'Item removido com sucesso' };
   }
-
   async atualizarQuantidadeItem(comandaId, itemComandaId, novaQuantidade) {
     const comanda = await this.buscarPorId(comandaId);
     if (comanda.status !== 'ABERTA') {
@@ -203,10 +203,13 @@ class ServicoComanda {
 
     if (novaQuantidade === 0) {
       await itemComanda.destroy();
+      await this.recalcularTotal(comandaId);
       return { mensagem: 'Item removido com sucesso (quantidade 0)' };
     } else {
       itemComanda.quantidade = novaQuantidade;
+      itemComanda.subtotal = (Number(itemComanda.preco_unitario) * Number(novaQuantidade)).toFixed(2);
       await itemComanda.save();
+      await this.recalcularTotal(comandaId);
       return itemComanda;
     }
   }

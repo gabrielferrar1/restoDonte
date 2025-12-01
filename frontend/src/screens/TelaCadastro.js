@@ -1,114 +1,154 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { CORES, FONTES, ESPACAMENTOS, BORDAS, SOMBRAS } from '../constants/tema';
+import Input from '../components/Input';
+import Botao from '../components/Botao';
 
 export default function TelaCadastro({ navigation }) {
   const { cadastrar } = useAuth();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [erros, setErros] = useState({});
+
+  const validar = () => {
+    const novosErros = {};
+    if (!nome.trim()) novosErros.nome = 'O nome é obrigatório.';
+    if (!email.trim()) novosErros.email = 'O e-mail é obrigatório.';
+    if (!senha) novosErros.senha = 'A senha é obrigatória.';
+    else if (senha.length < 6) novosErros.senha = 'A senha deve ter no mínimo 6 caracteres.';
+    if (senha !== confirmarSenha) novosErros.confirmarSenha = 'As senhas não coincidem.';
+
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
+  };
 
   const aoPressionarCadastrar = async () => {
+    if (!validar()) return;
+
     try {
       setCarregando(true);
       await cadastrar(nome, email, senha);
-      Alert.alert('Sucesso', 'Usuário cadastrado e autenticado com sucesso!');
+      // O AuthContext já lida com o login automático, então o usuário será redirecionado.
+      // O Alert foi removido para uma experiência mais fluida.
     } catch (erro) {
-      Alert.alert('Erro no cadastro', erro.message);
+      // Se o erro for da API (ex: email já existe), exibe no campo de email.
+      if (erro.message.toLowerCase().includes('email')) {
+        setErros({ email: erro.message });
+      } else {
+        setErros({ geral: erro.message });
+      }
     } finally {
       setCarregando(false);
     }
   };
 
   return (
-    <View style={estilos.container}>
-      <Text style={estilos.titulo}>Criar conta</Text>
+    <ScrollView contentContainerStyle={estilos.scrollContainer} keyboardShouldPersistTaps="handled">
+      <View style={estilos.container}>
+        <View style={estilos.formContainer}>
+          <Text style={estilos.titulo}>Criar Conta</Text>
+          <Text style={estilos.subtitulo}>Junte-se ao RestôDonte</Text>
 
-      <TextInput
-        style={estilos.entrada}
-        placeholder="Nome"
-        value={nome}
-        onChangeText={setNome}
-      />
+          {erros.geral && <Text style={estilos.erroGeral}>{erros.geral}</Text>}
 
-      <TextInput
-        style={estilos.entrada}
-        placeholder="E-mail"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
+          <Input
+            label="Nome Completo"
+            placeholder="Seu nome"
+            value={nome}
+            onChangeText={setNome}
+            erro={erros.nome}
+          />
 
-      <TextInput
-        style={estilos.entrada}
-        placeholder="Senha"
-        value={senha}
-        onChangeText={setSenha}
-        secureTextEntry
-      />
+          <Input
+            label="E-mail"
+            placeholder="seu@email.com"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            erro={erros.email}
+          />
 
-      <TouchableOpacity
-        style={[estilos.botao, carregando && estilos.botaoDesabilitado]}
-        onPress={aoPressionarCadastrar}
-        disabled={carregando}
-      >
-        <Text style={estilos.textoBotao}>{carregando ? 'Cadastrando...' : 'Cadastrar'}</Text>
-      </TouchableOpacity>
+          <Input
+            label="Senha"
+            placeholder="Mínimo 6 caracteres"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry
+            erro={erros.senha}
+          />
 
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={estilos.link}>Já tem conta? Voltar para login</Text>
-      </TouchableOpacity>
-    </View>
+          <Input
+            label="Confirmar Senha"
+            placeholder="Repita a senha"
+            value={confirmarSenha}
+            onChangeText={setConfirmarSenha}
+            secureTextEntry
+            erro={erros.confirmarSenha}
+          />
+
+          <Botao
+            titulo="Cadastrar"
+            onPress={aoPressionarCadastrar}
+            carregando={carregando}
+            larguraCompleta
+            estilo={{ marginTop: ESPACAMENTOS.pequeno }}
+          />
+        </View>
+
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={estilos.link}>Já tem conta? Voltar para login</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const estilos = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#FFF3E0',
-    alignItems: 'center',
+    backgroundColor: CORES.fundoClaro,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    padding: ESPACAMENTOS.grande,
+  },
+  formContainer: {
+    backgroundColor: CORES.fundoBranco,
+    padding: ESPACAMENTOS.grande,
+    borderRadius: BORDAS.grande,
+    ...SOMBRAS.media,
+    marginBottom: ESPACAMENTOS.grande,
   },
   titulo: {
-    fontSize: 28,
+    fontSize: FONTES.destaque,
     fontWeight: 'bold',
-    color: '#E65100',
-    marginBottom: 24,
+    color: CORES.primaria,
+    textAlign: 'center',
+    marginBottom: ESPACAMENTOS.pequeno,
   },
-  entrada: {
-    width: '100%',
-    height: 48,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFCC80',
-    paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 12,
-  },
-  botao: {
-    width: '100%',
-    height: 48,
-    backgroundColor: '#E65100',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  botaoDesabilitado: {
-    opacity: 0.7,
-  },
-  textoBotao: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
+  subtitulo: {
+    fontSize: FONTES.media,
+    color: CORES.textoMedio,
+    textAlign: 'center',
+    marginBottom: ESPACAMENTOS.grande,
   },
   link: {
-    color: '#E65100',
-    marginTop: 4,
+    color: CORES.primaria,
+    fontSize: FONTES.media,
+    textAlign: 'center',
+    paddingVertical: ESPACAMENTOS.pequeno,
   },
+  erroGeral: {
+    color: CORES.erro,
+    fontSize: FONTES.media,
+    textAlign: 'center',
+    marginBottom: ESPACAMENTOS.medio,
+  }
 });
 

@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { CORES, FONTES, ESPACAMENTOS, BORDAS, SOMBRAS } from '../constants/tema';
+import Input from '../components/Input';
+import Botao from '../components/Botao';
 
 export default function TelaEsqueciSenha({ navigation }) {
   const { esqueciMinhaSenha } = useAuth();
   const [email, setEmail] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [sucesso, setSucesso] = useState('');
 
   const aoPressionarEnviar = async () => {
+    if (!email.trim()) {
+      setErro('Por favor, informe o seu e-mail.');
+      return;
+    }
     try {
+      setErro('');
+      setSucesso('');
       setCarregando(true);
-      await esqueciMinhaSenha(email);
-    } catch (erro) {
-      Alert.alert('Erro', erro.message);
+      const resposta = await esqueciMinhaSenha(email);
+      setSucesso(resposta.mensagem || 'Instruções de recuperação enviadas para o seu e-mail.');
+    } catch (err) {
+      setErro(err.message);
     } finally {
       setCarregando(false);
     }
@@ -20,27 +32,35 @@ export default function TelaEsqueciSenha({ navigation }) {
 
   return (
     <View style={estilos.container}>
-      <Text style={estilos.titulo}>Esqueci minha senha</Text>
-      <Text style={estilos.subtitulo}>
-        Informe o e-mail cadastrado para receber as instruções de recuperação de senha.
-      </Text>
+      <View style={estilos.formContainer}>
+        <Text style={estilos.titulo}>Recuperar Senha</Text>
+        <Text style={estilos.subtitulo}>
+          Informe seu e-mail para enviarmos as instruções de recuperação.
+        </Text>
 
-      <TextInput
-        style={estilos.entrada}
-        placeholder="E-mail"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
+        {sucesso ? (
+          <Text style={estilos.sucesso}>{sucesso}</Text>
+        ) : (
+          <Input
+            label="E-mail"
+            placeholder="seu@email.com"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            erro={erro}
+          />
+        )}
 
-      <TouchableOpacity
-        style={[estilos.botao, carregando && estilos.botaoDesabilitado]}
-        onPress={aoPressionarEnviar}
-        disabled={carregando}
-      >
-        <Text style={estilos.textoBotao}>{carregando ? 'Enviando...' : 'Enviar'}</Text>
-      </TouchableOpacity>
+        <Botao
+          titulo="Enviar"
+          onPress={aoPressionarEnviar}
+          carregando={carregando}
+          larguraCompleta
+          estilo={{ marginTop: ESPACAMENTOS.pequeno }}
+          desabilitado={!!sucesso}
+        />
+      </View>
 
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Text style={estilos.link}>Voltar para login</Text>
@@ -52,54 +72,41 @@ export default function TelaEsqueciSenha({ navigation }) {
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF3E0',
-    alignItems: 'center',
+    backgroundColor: CORES.fundoClaro,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    padding: ESPACAMENTOS.grande,
+  },
+  formContainer: {
+    backgroundColor: CORES.fundoBranco,
+    padding: ESPACAMENTOS.grande,
+    borderRadius: BORDAS.grande,
+    ...SOMBRAS.media,
+    marginBottom: ESPACAMENTOS.grande,
   },
   titulo: {
-    fontSize: 24,
+    fontSize: FONTES.destaque,
     fontWeight: 'bold',
-    color: '#E65100',
-    marginBottom: 12,
+    color: CORES.primaria,
+    textAlign: 'center',
+    marginBottom: ESPACAMENTOS.pequeno,
   },
   subtitulo: {
-    fontSize: 14,
-    color: '#6D4C41',
-    marginBottom: 24,
+    fontSize: FONTES.media,
+    color: CORES.textoMedio,
     textAlign: 'center',
-  },
-  entrada: {
-    width: '100%',
-    height: 48,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFCC80',
-    paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 12,
-  },
-  botao: {
-    width: '100%',
-    height: 48,
-    backgroundColor: '#E65100',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  botaoDesabilitado: {
-    opacity: 0.7,
-  },
-  textoBotao: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginBottom: ESPACAMENTOS.grande,
   },
   link: {
-    color: '#E65100',
-    marginTop: 4,
+    color: CORES.primaria,
+    fontSize: FONTES.media,
+    textAlign: 'center',
+    paddingVertical: ESPACAMENTOS.pequeno,
+  },
+  sucesso: {
+    color: CORES.sucesso,
+    fontSize: FONTES.media,
+    textAlign: 'center',
+    marginBottom: ESPACAMENTOS.medio,
   },
 });
 

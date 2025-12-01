@@ -16,7 +16,7 @@ module.exports = {
       BEGIN
         RETURN QUERY
         SELECT 
-          DATE(c.data_abertura) as data,
+          DATE(COALESCE(c.data_fechamento, c.data_abertura)) as data,
           COUNT(DISTINCT c.id) as total_comandas,
           COALESCE(SUM(c.valor_total), 0) as total_vendas,
           COALESCE(SUM(ic.quantidade), 0) as total_itens_vendidos,
@@ -27,9 +27,9 @@ module.exports = {
         FROM comandas c
         LEFT JOIN itens_comanda ic ON c.id = ic.comanda_id
         WHERE c.status IN ('FECHADA', 'PAGA')
-          AND DATE(c.data_abertura) BETWEEN data_inicio AND data_fim
-        GROUP BY DATE(c.data_abertura)
-        ORDER BY DATE(c.data_abertura) DESC;
+          AND DATE(COALESCE(c.data_fechamento, c.data_abertura)) BETWEEN data_inicio AND data_fim
+        GROUP BY DATE(COALESCE(c.data_fechamento, c.data_abertura))
+        ORDER BY DATE(COALESCE(c.data_fechamento, c.data_abertura)) DESC;
       END;
       $$ LANGUAGE plpgsql;
     `);
@@ -56,7 +56,7 @@ module.exports = {
         INNER JOIN itens_comanda ic ON i.id = ic.item_cardapio_id
         INNER JOIN comandas c ON ic.comanda_id = c.id
         WHERE c.status IN ('FECHADA', 'PAGA')
-          AND DATE(c.data_abertura) BETWEEN data_inicio AND data_fim
+          AND DATE(COALESCE(c.data_fechamento, c.data_abertura)) BETWEEN data_inicio AND data_fim
         GROUP BY i.id, i.nome, i.tipo
         ORDER BY quantidade_vendida DESC
         LIMIT limite;

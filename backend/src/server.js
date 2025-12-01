@@ -49,7 +49,7 @@ app.use((req, res) => {
 });
 
 // Tratamento de erros global
-app.use((erro, req, res) => {
+app.use((erro, req, res, next) => {
   console.error('Erro:', erro);
   res.status(500).json({
     sucesso: false,
@@ -67,7 +67,7 @@ sequelize.authenticate()
     app.listen(PORTA, HOST, () => {
       const publicHost = process.env.INSTANCE_PUBLIC_IP || HOST;
       console.log(`Servidor rodando em http://${publicHost}:${PORTA}`);
-      console.log(`Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`Ambiente: ${process.env.NODE_ENV || 'Desenvolvimento'}`);
       console.log('Endpoints principais:');
       console.log('  - POST   /api/autenticacao/login');
       console.log('  - POST   /api/autenticacao/registrar');

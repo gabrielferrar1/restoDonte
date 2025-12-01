@@ -75,7 +75,9 @@ class ControladorComanda {
 
   async fechar(req, res) {
     try {
+      console.log(`[Comandas] Solicitação de fechamento recebida para comanda ${req.params.id}`);
       const comanda = await ServicoComanda.fecharComanda(req.params.id);
+      console.log(`[Comandas] Comanda ${req.params.id} fechada com sucesso.`);
       res.status(200).json(comanda);
     } catch (erro) {
       lidarComErros(res, erro);
@@ -84,7 +86,9 @@ class ControladorComanda {
 
   async registrarPagamento(req, res) {
     try {
+      console.log(`[Comandas] Solicitação de pagamento recebida para comanda ${req.params.id}`);
       const comanda = await ServicoComanda.registrarPagamento(req.params.id);
+      console.log(`[Comandas] Pagamento registrado para comanda ${req.params.id}.`);
       res.status(200).json(comanda);
     } catch (erro) {
       lidarComErros(res, erro);

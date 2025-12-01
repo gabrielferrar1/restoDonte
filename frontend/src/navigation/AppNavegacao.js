@@ -11,6 +11,7 @@ import TelaCardapio from '../screens/TelaCardapio';
 import TelaComandas from '../screens/TelaComandas';
 import TelaProducao from '../screens/TelaProducao';
 import TelaRelatorio from '../screens/TelaRelatorio';
+import TelaDetalhesComanda from '../screens/TelaDetalhesComanda';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,22 +46,27 @@ function NavegacaoPrincipal() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="Cardápio"
+        name="Cardapio"
         component={TelaCardapio}
         options={{ title: 'Cardápio' }}
       />
       <Stack.Screen
-        name="Pedidos"
+        name="Comandas"
         component={TelaComandas}
-        options={{ title: 'Pedidos' }}
+        options={{ title: 'Comandas' }}
       />
       <Stack.Screen
-        name="Produção"
+        name="DetalhesComanda"
+        component={TelaDetalhesComanda}
+        options={({ route }) => ({ title: `Comanda #${route.params?.comandaId}` })}
+      />
+      <Stack.Screen
+        name="Producao"
         component={TelaProducao}
         options={{ title: 'Produção - Copa e Cozinha' }}
       />
       <Stack.Screen
-        name="Relatório"
+        name="Relatorio"
         component={TelaRelatorio}
         options={{ title: 'Relatório diário' }}
       />
